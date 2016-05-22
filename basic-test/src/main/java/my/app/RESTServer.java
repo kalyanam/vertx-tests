@@ -2,6 +2,8 @@ package my.app;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.CorsHandler;
@@ -10,6 +12,8 @@ import io.vertx.ext.web.handler.CorsHandler;
  * Created by mkalyan on 5/22/16.
  */
 public class RESTServer extends AbstractVerticle {
+    private static final Logger logger = LoggerFactory.getLogger(RESTServer.class);
+
     @Override
     public void start(Future<Void> fut) {
         Router router = Router.router(getVertx());
@@ -21,6 +25,14 @@ public class RESTServer extends AbstractVerticle {
     }
 
     private void longRunningOp(RoutingContext routingContext) {
-        routingContext.response().end("All is well!");
+        logger.info("Starting to run the op...");
+        try {
+            Thread.sleep(5000);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            routingContext.fail(500);
+        }
+        logger.info("Done and sending the response...");
+        routingContext.response().end("Many many products...");
     }
 }
