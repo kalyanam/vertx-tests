@@ -2,11 +2,11 @@ package my.app;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.CorsHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by mkalyan on 5/22/16.
@@ -18,10 +18,28 @@ public class RESTServer extends AbstractVerticle {
     public void start(Future<Void> fut) {
         Router router = Router.router(getVertx());
         router.route().handler(CorsHandler.create("*"));
-        router.get().path("/products").handler(this::longRunningOp);
+        router.get().path("/products").handler(this::executeBlockingUnordered);
 
         getVertx().createHttpServer().requestHandler(router::accept).listen(8081);
         fut.complete();
+    }
+
+    private void executeBlockingUnordered(RoutingContext context) {
+        getVertx().executeBlocking(blockingCodeHandler -> {
+            longRunningOp(context);
+        }, false, resultHandler -> {
+            logger.info("Succeeded....");
+            resultHandler.succeeded();
+        });
+    }
+
+    private void executeBlockingOrdered(RoutingContext context) {
+        getVertx().executeBlocking(blockingCodeHandler -> {
+            longRunningOp(context);
+        }, resultHandler -> {
+            logger.info("Succeeded....");
+            resultHandler.succeeded();
+        });
     }
 
     private void longRunningOp(RoutingContext routingContext) {
